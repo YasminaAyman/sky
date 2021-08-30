@@ -1,0 +1,19 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "shippings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "customerCode",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createDate",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
