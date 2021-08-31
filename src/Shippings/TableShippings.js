@@ -565,7 +565,7 @@ export default function TableShippings() {
         rowsPerPage={rowsPerPage}
         page={page}
         onChangePage={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
+        onChangeRowsPerPage={handleChangeRowsPerPage}
       />
     </Paper>
   );

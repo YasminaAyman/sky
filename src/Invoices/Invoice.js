@@ -186,19 +186,19 @@ export default function Invoice(props) {
 
                     <TableRow style={{ 'border-top': 'solid' }}>
                       <StyledTableCell style={{ 'font-weight': '600' }} align="right">Total Weight</StyledTableCell>
-                      <StyledTableCell style={{ 'font-weight': '600' }} align="center">{Number(invoice.totalWeight).toFixed(1)}</StyledTableCell>
+                      <StyledTableCell style={{ 'font-weight': '600' }} align="center">{Number(invoice.totalWeight).toFixed(2)}</StyledTableCell>
                       <StyledTableCell style={{ 'font-weight': '600' }} align="right" colSpan={5} >Total Amount</StyledTableCell>
-                      <StyledTableCell align="center" style={{ 'font-weight': '600' }}>{Number(invoice.totalAmount).toFixed(1)}</StyledTableCell>
+                      <StyledTableCell align="center" style={{ 'font-weight': '600' }}>{Number(invoice.total).toFixed(2)}</StyledTableCell>
                     </TableRow>
                     {invoice.totalVAT !== 0 ?
                       <TableRow>
                         <StyledTableCell style={{ 'font-weight': '600' }} align="right" colSpan={7} >VAT (14%)</StyledTableCell>
-                        <StyledTableCell style={{ 'font-weight': '600' }} align="center">{Number(invoice.totalVAT).toFixed(1)}</StyledTableCell>
+                        <StyledTableCell style={{ 'font-weight': '600' }} align="center">{Number(invoice.totalVAT).toFixed(2)}</StyledTableCell>
                       </TableRow>
                       : <div />}
                     <TableRow style={{ 'border-top': 'solid' }}>
                       <StyledTableCell align="right" colSpan={7} style={{ 'font-weight': '700' }}>Grand Total</StyledTableCell>
-                      <StyledTableCell align="center" style={{ 'font-weight': '700' }}>{Number(Number(invoice.totalAmount).toFixed(1)) + Number(Number(invoice.totalVAT).toFixed(1))}</StyledTableCell>
+                      <StyledTableCell align="center" style={{ 'font-weight': '700' }}>{Number(Number(invoice.total).toFixed(2)) + Number(Number(invoice.totalVAT).toFixed(2))}</StyledTableCell>
                     </TableRow>
                   </TableBody>
                 </Table>

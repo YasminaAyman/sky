@@ -83,17 +83,17 @@ export default function EditShipping(props) {
       zone: country.zone,
       customerCode: customer.code,
       customerName: customer.name,
-      cost: Number(cost).toFixed(1),
-      dollarCost: Number(dollarCost).toFixed(1),
+      cost: Number(cost).toFixed(2),
+      dollarCost: Number(dollarCost).toFixed(2),
       weight: Number(weight),
       rate: Number(rate),
       fc: Number(fc),
       createDate: selectedDate,
       isDoc: isDoc,
-      vat: ((Number(cost) / 1.1) * 0.1).toFixed(1),
-      vatDollar: ((Number(dollarCost) / 1.1) * 0.1).toFixed(1),
-      fees: (((Number(cost) / 1.1) / 1.4) * 0.14).toFixed(1),
-      feesDollar: (((Number(dollarCost) / 1.1) / 1.4) * 0.14).toFixed(1),
+      vat: ((Number(cost) / 1.1) * 0.1).toFixed(2),
+      vatDollar: ((Number(dollarCost) / 1.1) * 0.1).toFixed(2),
+      fees: (((Number(cost) / 1.1) / 1.4) * 0.14).toFixed(2),
+      feesDollar: (((Number(dollarCost) / 1.1) / 1.4) * 0.14).toFixed(2),
       extraFees: Number(extraFees),
       status: status,
       direction: direction,
@@ -125,8 +125,8 @@ export default function EditShipping(props) {
             }
           });
           cost = (((cost * Number(f)) * 1.14) * 1.1) + ((Number(ef) * Number(f)) * 1.14)
-          setDollarCost(cost.toFixed(1))
-          setCost((cost * Number(r)).toFixed(1))
+          setDollarCost(cost.toFixed(2))
+          setCost((cost * Number(r)).toFixed(2))
         })
         .catch((error) => {
           console.log("Error getting documents: ", error);
@@ -356,7 +356,7 @@ export default function EditShipping(props) {
               setCost(event.target.value)
               if (direction !== 'dest' || customer.code === '10000') {
                 var dollar = Number(event.target.value) / rate;
-                setDollarCost(dollar.toFixed(1))
+                setDollarCost(dollar.toFixed(2))
               }
             }}
           />
@@ -375,7 +375,7 @@ export default function EditShipping(props) {
               setDollarCost(event.target.value)
               if (direction !== 'dest' || customer.code === '10000') {
                 var egp = Number(event.target.value) * rate;
-                setCost(egp.toFixed(1))
+                setCost(egp.toFixed(2))
               }
             }}
           />

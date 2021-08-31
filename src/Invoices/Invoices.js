@@ -27,6 +27,10 @@ import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import CloseIcon from '@material-ui/icons/Close';
+import Grid from '@material-ui/core/Grid';
+import { Button } from '@material-ui/core';
+import { PDFExport } from "@progress/kendo-react-pdf";
+
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -44,7 +48,7 @@ const columns = [
     key: '2',
     id: 'date',
     label: 'Date',
-    minWidth: 170,
+    minWidth: 70,
     format: (value) => getDate(value),
     align: 'center',
   },
@@ -52,7 +56,7 @@ const columns = [
     key: 'code',
     label: 'Customer Code',
     id: 'customer',
-    minWidth: 90,
+    minWidth: 50,
     align: 'center',
   },
   {
@@ -63,11 +67,41 @@ const columns = [
     align: 'center',
   },
   {
+    key: '13',
+    id: 'pieces',
+    label: 'Pieces',
+    minWidth: 20,
+    align: 'center',
+  },
+  {
     key: '5',
     id: 'rate',
     label: 'Rate',
     minWidth: 70,
     align: 'center',
+  },
+  {
+    key: '10',
+    id: 'totalExtra',
+    label: 'Extra Fees',
+    minWidth: 70,
+    align: 'center',
+  },
+  {
+    key: '8',
+    id: 'totalWeight',
+    label: 'Total Weight',
+    minWidth: 70,
+    align: 'center',
+    format: (value) => Number(value).toFixed(2),
+  },
+  {
+    key: '14',
+    id: 'totalAmount',
+    label: 'Amount',
+    minWidth: 70,
+    align: 'center',
+    format: (value) => Number(value).toFixed(2),
   },
   {
     key: '6',
@@ -77,20 +111,33 @@ const columns = [
     align: 'center',
   },
   {
-    key: '7',
-    label: 'Total Amount (EGP)',
-    id: 'totalAmount',
-    minWidth: 90,
-    align: 'center',
-    format: (value) => Number(value).toFixed(1),
-  },
-  {
-    key: '8',
-    id: 'totalWeight',
-    label: 'Total Weight (KG)',
+    key: '9',
+    id: 'totalFC',
+    label: 'Amount FC',
     minWidth: 70,
     align: 'center',
-    format: (value) => Number(value).toFixed(1),
+  },
+  {
+    key: '11',
+    id: 'totalPF',
+    label: 'Total PF',
+    minWidth: 70,
+    align: 'center',
+  },
+  {
+    key: '12',
+    id: 'totalVAT',
+    label: 'Total VAT',
+    minWidth: 70,
+    align: 'center',
+  },
+  {
+    key: '7',
+    label: 'Grand Total',
+    id: 'total',
+    minWidth: 90,
+    align: 'center',
+    format: (value) => Number(value).toFixed(2),
   }
 ];
 
@@ -134,6 +181,20 @@ const StyledTableCell = withStyles((theme) => ({
   body: {
     fontSize: 14,
     padding: 0
+  },
+}))(TableCell);
+
+const ExportStyledTableCell = withStyles((theme) => ({
+  head: {
+    backgroundColor: '#3f51b5',
+    color: theme.palette.common.white,
+    padding: 0,
+    fontWeight: '400',
+    fontSize: '8px'
+  },
+  body: {
+    padding: 0,
+    fontSize: '8px'
   },
 }))(TableCell);
 
@@ -189,6 +250,7 @@ EnhancedTableHead.propTypes = {
 };
 
 export default function Invoices() {
+  const pdfExportComponent = React.useRef(null);
   const [open, setOpen] = useState(false);
   const [openFull, setOpenFull] = useState(false);
   const [invoices, setInvoices] = useState([])
@@ -198,6 +260,13 @@ export default function Invoices() {
   const [order, setOrder] = React.useState('asc');
   const [orderBy, setOrderBy] = React.useState('calories');
   const [selectedRow, setSelectedRow] = React.useState({});
+  const [openDialog, setOpenDialog] = useState(false);
+  const [exportedInvoices, setExportedInvoices] = useState([])
+  const [exportedTotal, setExportedTotal] = useState({});
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+  };
 
   const handleRequestSort = (event, property) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -254,8 +323,23 @@ export default function Invoices() {
     root: {
       width: '100%',
     },
+    exportRoot: {
+      marginTop: '2cm',
+      marginBottom: '1.5cm',
+      padding: '10px'
+    },
     container: {
       maxHeight: '100%',
+    },
+    exportTable: {
+      fontSize: '200pt'
+    },
+    exportHead: {
+      backgroundColor: '#3f51b5',
+      color: theme.palette.common.white,
+      padding: 0,
+      fontWeight: '400',
+      fontSize: '6px'
     },
     visuallyHidden: {
       border: 0,
@@ -300,8 +384,172 @@ export default function Invoices() {
     });
   }
 
+  const setCustomExportedInvoices = (type) => {
+    const toBeExported = [];
+
+    invoices.forEach((invoice) => {
+        var found = false;
+        var shippingList = [];
+        var totalAmount = 0, totalWeight = 0, totalVAT = 0, totalExtra = 0, totalFC = 0, totalPF = 0, total = 0;
+        invoice.shippings.forEach((shipping) => {
+          if ((type === 1 && Number(shipping.weight) <= 50) || (type === 2 && Number(shipping.weight) > 50)) {
+            found = true;
+            shippingList.push(shipping)
+            totalAmount += Number(shipping.amount)
+            totalExtra += Number(shipping.extraFees)
+            totalFC += Number(shipping.fcAmount)
+            totalPF += Number(shipping.pf)
+            totalVAT += Number(shipping.amountTotal) * (invoice.customer.taxable ? 0.14 : 0)
+            totalWeight += Number(shipping.weight)
+            total += Number(shipping.amountTotal)
+          }
+        })
+        if (found) {
+          toBeExported.push({
+            invoiceNumber: invoice.invsoiceNumber,
+            date: invoice.date,
+            rate: invoice.rate,
+            fc: invoice.fc,
+            customer: invoice.customer,
+            shippings: shippingList,
+            pieces: shippingList.length,
+            totalAmount: Number(totalAmount).toFixed(2),
+            totalVAT: Number(totalVAT).toFixed(2),
+            totalExtra: Number(totalExtra).toFixed(2),
+            totalFC: Number(totalFC).toFixed(2),
+            totalPF: Number(totalPF).toFixed(2),
+            totalWeight: Number(totalWeight),
+            total: Number(total).toFixed(2)
+          })
+        }
+    })
+      setExportedInvoices(toBeExported);
+      setInvoicesReport(toBeExported);
+  }
+
+  const setInvoicesReport = (invoices) => {
+    var allPieces = 0, allExtra = 0, allWeight = 0, allAmount = 0, allFC = 0, allPF = 0, allVAT = 0, allTotal = 0;
+    invoices.forEach((invoice) => {
+      allPieces += invoice.pieces;
+      allExtra += Number(invoice.totalExtra).toFixed(2)
+      allWeight += Number(invoice.totalWeight);
+      allAmount += Number(invoice.totalAmount).toFixed(2);
+      allPF += Number(invoice.totalPF).toFixed(2);
+      allFC += Number(invoice.totalFC).toFixed(2);
+      allVAT += Number(invoice.totalVAT).toFixed(2);
+      allTotal += Number(invoice.total).toFixed(2);
+    })
+    setExportedTotal({
+      allPieces, allExtra, allWeight, allAmount, allFC, allPF, allVAT, allTotal
+    })
+  }
+
+  function ExportedTable() {
+    return (
+      <Grid container spacing={1} className={classes.exportRoot}>
+        <TableContainer component={Paper} style={{ 'padding': '15px' }}>
+          <Table className={classes.exportTable} aria-label="spanning table">
+            <TableHead>
+              <StyledTableRow hover role="checkbox" tabIndex={-1}>
+                {columns.map((column) => (
+                  <ExportStyledTableCell
+                    key={column.key}
+                    align={column.align}
+                  >
+                    {column.label}
+                  </ExportStyledTableCell>
+                ))}
+              </StyledTableRow>
+            </TableHead>
+            <TableBody>
+              {stableSort(exportedInvoices, getComparator(order, orderBy))
+                .map((row) => (
+                  <StyledTableRow hover role="checkbox" tabIndex={-1} key={row.id}>
+                    {columns.map((column) => {
+                      const value = row[column.id];
+                      return (
+                        <ExportStyledTableCell key={column.key} align={column.align}>
+                          {column.id === 'date' ? column.format(value.seconds) : (column.id === 'customer' ? value[column.key] : (column.id === 'totalWeight' || column.id === 'totalAmount' ? column.format(value) : value))}
+                        </ExportStyledTableCell>
+                      );
+                    })}
+                  </StyledTableRow>
+                )
+                )}
+                <StyledTableRow style={{ 'border-top': 'solid' }}>
+                  <ExportStyledTableCell align='right' colSpan={5}>{Number(exportedTotal.allPieces)}</ExportStyledTableCell>
+                  <ExportStyledTableCell align='right' colSpan={2}>{Number(exportedTotal.allExtra)}</ExportStyledTableCell>
+                  <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allWeight)}</ExportStyledTableCell>
+                  <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allAmount)}</ExportStyledTableCell>
+                  <ExportStyledTableCell align='right' colSpan={2}>{Number(exportedTotal.allFC)}</ExportStyledTableCell>
+                  <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allPF)}</ExportStyledTableCell>
+                  <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allVAT)}</ExportStyledTableCell>
+                  <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allTotal)}</ExportStyledTableCell>
+                </StyledTableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Grid>
+    )
+  }
+
   return (
     <Paper className={classes.root}>
+      <div style={{ 'padding': '20px' }}>
+        <Button style={{ 'height': '40px', 'align-self': 'center', 'margin-right': '20px' }}
+          variant="contained"
+          color="primary"
+          onClick={() => {
+            setExportedInvoices(invoices)
+            setInvoicesReport(invoices)
+            setOpenDialog(true)
+          }}>
+          All Invoices
+        </Button>
+        <Button style={{ 'height': '40px', 'align-self': 'center', 'margin-right': '20px' }}
+          variant="contained"
+          color="primary"
+          onClick={() => {
+            setCustomExportedInvoices(1)
+            setOpenDialog(true)
+          }}>
+          Up To 50 KG
+        </Button>
+        <Button style={{ 'height': '40px', 'align-self': 'center' }}
+          variant="contained"
+          color="primary"
+          onClick={() => {
+            setCustomExportedInvoices(2)
+            setOpenDialog(true)
+          }}>
+          More Than 50 kG
+        </Button>
+        <Dialog
+          open={openDialog}
+          onClose={handleCloseDialog}
+          aria-labelledby="form-dialog-title"
+          maxWidth="lg"
+          fullWidth={true}
+        >
+          <DialogContent>
+            <Button
+              style={{ 'margin': '20px', 'margin-left': '85%', 'height': '50px' }}
+              variant="contained"
+              color="primary"
+              onClick={() => {
+                if (pdfExportComponent.current) {
+                  pdfExportComponent.current.save();
+                }
+              }}
+            >
+              Export PDF
+            </Button>
+            <PDFExport paperSize="A4" ref={pdfExportComponent} >
+              <ExportedTable />
+            </PDFExport>
+          </DialogContent>
+        </Dialog>
+      </div>
       <TableContainer className={classes.container}>
         <Table className={classes.table} stickyHeader aria-label="sticky table">
           <EnhancedTableHead
@@ -380,7 +628,7 @@ export default function Invoices() {
         rowsPerPage={rowsPerPage}
         page={page}
         onChangePage={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
+        onChangeRowsPerPage={handleChangeRowsPerPage}
       />
     </Paper>
   );

@@ -36,11 +36,10 @@ export default function EditInvoice(props) {
   const classes = useStyles();
   const [fc, setFC] = React.useState(rowInvoice.fc);
   const [rate, setRate] = React.useState(rowInvoice.rate);
-  const [priceList, setPriceList] = React.useState(rowInvoice.priceList);
 
 
   const getAmount = (w, z) => {
-    var arr = priceList.split("\n")
+    var arr = rowInvoice.customer.priceList.split("\n")
     for (let i = 0; i < arr.length; i++) {
       var words = arr[i].split('\t');
       if (Number(w) > Number(words[0].trim()) && Number(w) <= Number(words[1].trim())) {
@@ -63,12 +62,15 @@ export default function EditInvoice(props) {
       .get()
       .then((querySnapshot) => {
         var shippingList = [];
-        var totalAmount = 0;
-        var totalWeight = 0;
+        var totalAmount, totalWeight, totalVAT, totalExtra, totalFC, totalPF, total = 0;
 
         querySnapshot.forEach((doc) => {
           const shipping = doc.data();
           const amount = getAmount(shipping.weight, shipping.zone);
+          var pf = 0.1;
+          if (shipping.weight >= 50) {
+            pf = 0;
+          }
           shippingList.push({
             skyAWB: shipping.skyAWB,
             createDate: shipping.createDate,
@@ -76,26 +78,39 @@ export default function EditInvoice(props) {
             destination: shipping.direction === 'dest' ? shipping.destination : 'Egypt',
             weight: Number(shipping.weight),
             isDoc: shipping.isDoc,
-            amountDollar: (amount * Number(rate)).toFixed(1),
-            amount: amount.toFixed(1),
-            extraFeesDollar: Number(shipping.extraFees).toFixed(1),
-            extraFees: (Number(shipping.extraFees) * Number(rate)).toFixed(1),
-            fcAmountDollar: ((amount + Number(shipping.extraFees)) * (Number(fc) - 1)).toFixed(1),
-            fcAmount: ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1)).toFixed(1),
-            pfDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * 0.1).toFixed(1),
-            pf: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * 0.1).toFixed(1)
+            amountDollar: (amount * Number(rate)).toFixed(2),
+            amount: amount.toFixed(2),
+            extraFeesDollar: Number(shipping.extraFees).toFixed(2),
+            extraFees: (Number(shipping.extraFees) * Number(rate)).toFixed(2),
+            fcAmountDollar: ((amount + Number(shipping.extraFees)) * (Number(fc) - 1)).toFixed(2),
+            fcAmount: ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1)).toFixed(2),
+            pfDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * pf).toFixed(2),
+            pf: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * pf).toFixed(2),
+            amountTotal: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf)).toFixed(2),
+            amountTotalDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * (1 + pf)).toFixed(2)
           })
-          totalAmount += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * 1.1)
+          totalAmount += (amount * Number(rate))
+          totalExtra += (Number(shipping.extraFees) * Number(rate))
+          totalFC += ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1))
+          totalPF += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * pf)
+          totalVAT += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (rowInvoice.customer.taxable ? 0.14 : 0))
           totalWeight += Number(shipping.weight);
+          total += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf))
         })
         db.collection("invoices").doc(rowInvoice.customer.code + moment().format('MMYYYY').toString()).set({
           date: new Date(),
           rate: Number(rate),
           fc: Number(fc),
+          customer: rowInvoice.customer,
           shippings: shippingList,
-          totalAmount: Number(totalAmount).toFixed(1),
+          pieces: shippingList.length,
+          totalAmount: Number(totalAmount).toFixed(2),
+          totalVAT: Number(totalVAT).toFixed(2),
+          totalExtra: Number(totalExtra).toFixed(2),
+          totalFC: Number(totalFC).toFixed(2),
+          totalPF: Number(totalPF).toFixed(2),
           totalWeight: Number(totalWeight),
-          priceList: priceList
+          total: Number(total).toFixed(2),
         }, { merge: true });
 
         alert('Invoice is updated successfully!')
@@ -137,19 +152,6 @@ export default function EditInvoice(props) {
                 setRate(event.target.value)
               }}
             />
-          </Grid>
-          <Grid item xs={12} sm={12}>
-            <div>
-              <input type="file" onChange={async (e) => {
-                e.preventDefault()
-                const reader = new FileReader()
-                reader.onload = async (e) => {
-                  const text = (e.target.result)
-                  setPriceList(text);
-                };
-                reader.readAsText(e.target.files[0])
-              }} />
-            </div>
           </Grid>
           <Grid item xs={12} sm={12} >
             <Button color="primary" size="medium" style={{ 'left': '7  0%' }} onClick={() => {

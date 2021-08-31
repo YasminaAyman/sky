@@ -262,6 +262,7 @@ export default function Customers() {
   };
 
   const handleChangeRowsPerPage = (event) => {
+    console.log('heree', event.target.value)
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -352,7 +353,7 @@ export default function Customers() {
         rowsPerPage={rowsPerPage}
         page={page}
         onChangePage={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
+        onChangeRowsPerPage={handleChangeRowsPerPage}
       />
     </Paper>
   );

@@ -82,13 +82,15 @@ export default function CreateInvoice() {
       .get()
       .then((querySnapshot) => {
         var shippingList = [];
-        var totalAmount = 0;
-        var totalWeight = 0;
-        var totalVAT = 0;
+        var totalAmount = 0, totalWeight = 0, totalVAT = 0, totalExtra = 0, totalFC = 0, totalPF = 0, total = 0;
 
         querySnapshot.forEach((doc) => {
           const shipping = doc.data();
           const amount = getAmount(shipping.weight, shipping.zone);
+          var pf = 0.1;
+          if (shipping.weight >= 50) {
+            pf = 0;
+          }
           shippingList.push({
             skyAWB: shipping.skyAWB,
             createDate: shipping.createDate,
@@ -96,19 +98,23 @@ export default function CreateInvoice() {
             destination: shipping.direction === 'dest' ? shipping.destination : 'Egypt',
             weight: Number(shipping.weight),
             isDoc: shipping.isDoc,
-            amount: (amount * Number(rate)).toFixed(1),
-            amountDollar: amount.toFixed(1),
-            extraFeesDollar: Number(shipping.extraFees).toFixed(1),
-            extraFees: (Number(shipping.extraFees) * Number(rate)).toFixed(1),
-            fcAmountDollar: ((amount + Number(shipping.extraFees)) * (Number(fc) - 1)).toFixed(1),
-            fcAmount: ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1)).toFixed(1),
-            pfDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * 0.1).toFixed(1),
-            pf: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * 0.1).toFixed(1),
-            amountTotal: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * 1.1).toFixed(1),
-            amountTotalDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * 1.1).toFixed(1)
+            amount: (amount * Number(rate)).toFixed(2),
+            amountDollar: amount.toFixed(2),
+            extraFeesDollar: Number(shipping.extraFees).toFixed(2),
+            extraFees: (Number(shipping.extraFees) * Number(rate)).toFixed(2),
+            fcAmountDollar: ((amount + Number(shipping.extraFees)) * (Number(fc) - 1)).toFixed(2),
+            fcAmount: ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1)).toFixed(2),
+            pfDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * pf).toFixed(2),
+            pf: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * pf).toFixed(2),
+            amountTotal: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf)).toFixed(2),
+            amountTotalDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * (1 + pf)).toFixed(2)
           })
-          totalAmount += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * 1.1)
-          totalVAT += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * 1.1 * (customer.taxable ? 0.14 : 0))
+          totalAmount += (amount * Number(rate))
+          total += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf))
+          totalExtra += (Number(shipping.extraFees) * Number(rate))
+          totalFC += ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1))
+          totalPF += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * pf)
+          totalVAT += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (customer.taxable ? 0.14 : 0))
           totalWeight += Number(shipping.weight);
         })
 
@@ -121,8 +127,13 @@ export default function CreateInvoice() {
             fc: Number(fc),
             customer: customer,
             shippings: shippingList,
-            totalAmount: Number(totalAmount).toFixed(1),
-            totalVAT: Number(totalVAT).toFixed(1),
+            pieces: shippingList.length,
+            totalAmount: Number(totalAmount).toFixed(2),
+            totalVAT: Number(totalVAT).toFixed(2),
+            totalExtra: Number(totalExtra).toFixed(2),
+            totalFC: Number(totalFC).toFixed(2),
+            totalPF: Number(totalPF).toFixed(2),
+            total: Number(total).toFixed(2),
             totalWeight: Number(totalWeight),
           });
         });
