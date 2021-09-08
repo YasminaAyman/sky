@@ -30,7 +30,8 @@ import CloseIcon from '@material-ui/icons/Close';
 import Grid from '@material-ui/core/Grid';
 import { Button } from '@material-ui/core';
 import { PDFExport } from "@progress/kendo-react-pdf";
-
+import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
+import DateFnsUtils from '@date-io/date-fns';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -49,7 +50,6 @@ const columns = [
     id: 'date',
     label: 'Date',
     minWidth: 70,
-    format: (value) => getDate(value),
     align: 'center',
   },
   {
@@ -134,7 +134,7 @@ const columns = [
   {
     key: '7',
     label: 'Grand Total',
-    id: 'total',
+    id: 'grandTotal',
     minWidth: 90,
     align: 'center',
     format: (value) => Number(value).toFixed(2),
@@ -165,11 +165,6 @@ function stableSort(array, comparator) {
     return a[1] - b[1];
   });
   return stabilizedThis.map((el) => el[0]);
-}
-
-const getDate = (val) => {
-  var date = new Date(val * 1000);
-  return moment(date).format('DD/MM/YYYY').toString();
 }
 
 const StyledTableCell = withStyles((theme) => ({
@@ -263,6 +258,8 @@ export default function Invoices() {
   const [openDialog, setOpenDialog] = useState(false);
   const [exportedInvoices, setExportedInvoices] = useState([])
   const [exportedTotal, setExportedTotal] = useState({});
+  const [date, setDate] = React.useState(Date.now())
+
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
@@ -297,9 +294,16 @@ export default function Invoices() {
     setFetchingData(true);
   }
 
+  const handleDateChange = (date) => {
+    setDate(date);
+    updateTable()
+  };
+
   const fetchInvoices = () => {
+    console.log('fetchhhhhh', moment(date).format('MM/YYYY'))
     const invoicesList = []
     return db.collection('invoices')
+      .where('date', "==", moment(date).format('MM/YYYY'))
       .get().then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
           invoicesList.push({ ...doc.data(), id: doc.id });
@@ -390,7 +394,7 @@ export default function Invoices() {
     invoices.forEach((invoice) => {
       var found = false;
       var shippingList = [];
-      var totalAmount = 0, totalWeight = 0, totalVAT = 0, totalExtra = 0, totalFC = 0, totalPF = 0, total = 0;
+      var totalAmount = 0, totalWeight = 0, totalVAT = 0, totalExtra = 0, totalFC = 0, totalPF = 0, total = 0, grandTotal;
       invoice.shippings.forEach((shipping) => {
         if ((type === 1 && Number(shipping.weight) <= 50) || (type === 2 && Number(shipping.weight) > 50)) {
           found = true;
@@ -401,7 +405,7 @@ export default function Invoices() {
           totalPF += Number(shipping.pf)
           totalVAT += Number(shipping.amountTotal) * (invoice.customer.taxable ? 0.14 : 0)
           totalWeight += Number(shipping.weight)
-          total += Number(shipping.amountTotal)
+          total += Number(shipping.amountTotal) * (invoice.customer.taxable ? 1.14 : 1)
         }
       })
       if (found) {
@@ -419,7 +423,7 @@ export default function Invoices() {
           totalFC: Number(totalFC).toFixed(2),
           totalPF: Number(totalPF).toFixed(2),
           totalWeight: Number(totalWeight),
-          total: Number(total).toFixed(2)
+          grandTotal: Number(total).toFixed(2)
         })
       }
     })
@@ -437,7 +441,7 @@ export default function Invoices() {
       allPF += Number(invoice.totalPF).toFixed(2);
       allFC += Number(invoice.totalFC).toFixed(2);
       allVAT += Number(invoice.totalVAT).toFixed(2);
-      allTotal += Number(invoice.total).toFixed(2);
+      allTotal += Number(invoice.grandTotal).toFixed(2);
     })
     setExportedTotal({
       allPieces, allExtra, allWeight, allAmount, allFC, allPF, allVAT, allTotal
@@ -469,7 +473,7 @@ export default function Invoices() {
                       const value = row[column.id];
                       return (
                         <ExportStyledTableCell key={column.key} align={column.align}>
-                          {column.id === 'date' ? column.format(value.seconds) : (column.id === 'customer' ? value[column.key] : (column.id === 'totalWeight' || column.id === 'totalAmount' ? column.format(value) : value))}
+                          {(column.id === 'customer' ? value[column.key] : (column.id === 'totalWeight' || column.id === 'totalAmount' ? column.format(value) : value))}
                         </ExportStyledTableCell>
                       );
                     })}
@@ -549,6 +553,20 @@ export default function Invoices() {
             </PDFExport>
           </DialogContent>
         </Dialog>
+        <div style={{ 'text-align': 'right' }}>
+          <MuiPickersUtilsProvider utils={DateFnsUtils}>
+            <DatePicker
+              variant="inline"
+              openTo="year"
+              views={["year", "month"]}
+              label="Year and Month"
+              helperText="Start from year selection"
+              value={date}
+              onChange={handleDateChange}
+              maxDate={Date.now()}
+            />
+          </MuiPickersUtilsProvider>
+        </div>
       </div>
       <TableContainer className={classes.container}>
         <Table className={classes.table} stickyHeader aria-label="sticky table">
@@ -569,7 +587,7 @@ export default function Invoices() {
                       const value = row[column.id];
                       return (
                         <StyledTableCell key={column.key} align={column.align}>
-                          {column.id === 'date' ? column.format(value.seconds) : (column.id === 'customer' ? value[column.key] : (column.id === 'totalWeight' || column.id === 'totalAmount' ? column.format(value) : value))}
+                          {(column.id === 'customer' ? value[column.key] : (column.id === 'totalWeight' || column.id === 'totalAmount' ? column.format(value) : value))}
                         </StyledTableCell>
                       );
                     })}

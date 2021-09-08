@@ -62,7 +62,7 @@ export default function EditInvoice(props) {
       .get()
       .then((querySnapshot) => {
         var shippingList = [];
-        var totalAmount, totalWeight, totalVAT, totalExtra, totalFC, totalPF, total = 0;
+        var totalAmount = 0, totalWeight = 0, totalVAT = 0, totalExtra = 0, totalFC = 0, totalPF = 0, total = 0, grandTotal = 0;
 
         querySnapshot.forEach((doc) => {
           const shipping = doc.data();
@@ -78,8 +78,8 @@ export default function EditInvoice(props) {
             destination: shipping.direction === 'dest' ? shipping.destination : 'Egypt',
             weight: Number(shipping.weight),
             isDoc: shipping.isDoc,
-            amountDollar: (amount * Number(rate)).toFixed(2),
-            amount: amount.toFixed(2),
+            amount: (amount * Number(rate)).toFixed(2),
+            amountDollar: amount.toFixed(2),
             extraFeesDollar: Number(shipping.extraFees).toFixed(2),
             extraFees: (Number(shipping.extraFees) * Number(rate)).toFixed(2),
             fcAmountDollar: ((amount + Number(shipping.extraFees)) * (Number(fc) - 1)).toFixed(2),
@@ -89,19 +89,18 @@ export default function EditInvoice(props) {
             amountTotal: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf)).toFixed(2),
             amountTotalDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * (1 + pf)).toFixed(2)
           })
+          totalWeight += Number(shipping.weight);
           totalAmount += (amount * Number(rate))
           totalExtra += (Number(shipping.extraFees) * Number(rate))
           totalFC += ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1))
           totalPF += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * pf)
           totalVAT += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (rowInvoice.customer.taxable ? 0.14 : 0))
-          totalWeight += Number(shipping.weight);
           total += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf))
-        })
+          grandTotal += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (rowInvoice.customer.taxable ? 1.14 : 1))
+      })
         db.collection("invoices").doc(rowInvoice.customer.code + moment().format('MMYYYY').toString()).set({
-          date: new Date(),
           rate: Number(rate),
           fc: Number(fc),
-          customer: rowInvoice.customer,
           shippings: shippingList,
           pieces: shippingList.length,
           totalAmount: Number(totalAmount).toFixed(2),
@@ -109,8 +108,9 @@ export default function EditInvoice(props) {
           totalExtra: Number(totalExtra).toFixed(2),
           totalFC: Number(totalFC).toFixed(2),
           totalPF: Number(totalPF).toFixed(2),
-          totalWeight: Number(totalWeight),
           total: Number(total).toFixed(2),
+          totalWeight: Number(totalWeight),
+          grandTotal: Number(grandTotal).toFixed(2)
         }, { merge: true });
 
         alert('Invoice is updated successfully!')

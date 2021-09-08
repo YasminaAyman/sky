@@ -7,7 +7,6 @@ import TextField from '@material-ui/core/TextField';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import * as moment from 'moment';
 import Button from '@material-ui/core/Button';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
 import 'date-fns';
 import db from '../firebase.config';
 import { evaluate } from 'mathjs'
@@ -91,7 +90,7 @@ export default function CreateInvoice() {
         .get()
         .then((querySnapshot) => {
           var shippingList = [];
-          var totalAmount = 0, totalWeight = 0, totalVAT = 0, totalExtra = 0, totalFC = 0, totalPF = 0, total = 0;
+          var totalAmount = 0, totalWeight = 0, totalVAT = 0, totalExtra = 0, totalFC = 0, totalPF = 0, total = 0, grandTotal = 0;
 
           querySnapshot.forEach((doc) => {
             const shipping = doc.data();
@@ -118,20 +117,21 @@ export default function CreateInvoice() {
               amountTotal: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf)).toFixed(2),
               amountTotalDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * (1 + pf)).toFixed(2)
             })
+            totalWeight += Number(shipping.weight);
             totalAmount += (amount * Number(rate))
-            total += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (customer.taxable ? 1.14 : 0))
             totalExtra += (Number(shipping.extraFees) * Number(rate))
             totalFC += ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1))
             totalPF += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * pf)
             totalVAT += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (customer.taxable ? 0.14 : 0))
-            totalWeight += Number(shipping.weight);
+            total += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf))
+            grandTotal += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (customer.taxable ? 1.14 : 1))
           })
 
           db.collection("invoices").get().then((querySnapshot) => {
             const newCode = querySnapshot.size + 10000;
             db.collection("invoices").doc(customer.code + moment(date).format('MMYYYY').toString()).set({
               invoiceNumber: newCode,
-              date: new Date(),
+              date: moment(date).format('MM/YYYY'),
               rate: Number(rate),
               fc: Number(fc),
               customer: customer,
@@ -144,6 +144,7 @@ export default function CreateInvoice() {
               totalPF: Number(totalPF).toFixed(2),
               total: Number(total).toFixed(2),
               totalWeight: Number(totalWeight),
+              grandTotal: Number(grandTotal).toFixed(2)
             });
           });
           alert('Shipping is added successfully!')
