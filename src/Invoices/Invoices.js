@@ -388,43 +388,43 @@ export default function Invoices() {
     const toBeExported = [];
 
     invoices.forEach((invoice) => {
-        var found = false;
-        var shippingList = [];
-        var totalAmount = 0, totalWeight = 0, totalVAT = 0, totalExtra = 0, totalFC = 0, totalPF = 0, total = 0;
-        invoice.shippings.forEach((shipping) => {
-          if ((type === 1 && Number(shipping.weight) <= 50) || (type === 2 && Number(shipping.weight) > 50)) {
-            found = true;
-            shippingList.push(shipping)
-            totalAmount += Number(shipping.amount)
-            totalExtra += Number(shipping.extraFees)
-            totalFC += Number(shipping.fcAmount)
-            totalPF += Number(shipping.pf)
-            totalVAT += Number(shipping.amountTotal) * (invoice.customer.taxable ? 0.14 : 0)
-            totalWeight += Number(shipping.weight)
-            total += Number(shipping.amountTotal)
-          }
-        })
-        if (found) {
-          toBeExported.push({
-            invoiceNumber: invoice.invsoiceNumber,
-            date: invoice.date,
-            rate: invoice.rate,
-            fc: invoice.fc,
-            customer: invoice.customer,
-            shippings: shippingList,
-            pieces: shippingList.length,
-            totalAmount: Number(totalAmount).toFixed(2),
-            totalVAT: Number(totalVAT).toFixed(2),
-            totalExtra: Number(totalExtra).toFixed(2),
-            totalFC: Number(totalFC).toFixed(2),
-            totalPF: Number(totalPF).toFixed(2),
-            totalWeight: Number(totalWeight),
-            total: Number(total).toFixed(2)
-          })
+      var found = false;
+      var shippingList = [];
+      var totalAmount = 0, totalWeight = 0, totalVAT = 0, totalExtra = 0, totalFC = 0, totalPF = 0, total = 0;
+      invoice.shippings.forEach((shipping) => {
+        if ((type === 1 && Number(shipping.weight) <= 50) || (type === 2 && Number(shipping.weight) > 50)) {
+          found = true;
+          shippingList.push(shipping)
+          totalAmount += Number(shipping.amount)
+          totalExtra += Number(shipping.extraFees)
+          totalFC += Number(shipping.fcAmount)
+          totalPF += Number(shipping.pf)
+          totalVAT += Number(shipping.amountTotal) * (invoice.customer.taxable ? 0.14 : 0)
+          totalWeight += Number(shipping.weight)
+          total += Number(shipping.amountTotal)
         }
+      })
+      if (found) {
+        toBeExported.push({
+          invoiceNumber: invoice.invoiceNumber,
+          date: invoice.date,
+          rate: invoice.rate,
+          fc: invoice.fc,
+          customer: invoice.customer,
+          shippings: shippingList,
+          pieces: shippingList.length,
+          totalAmount: Number(totalAmount).toFixed(2),
+          totalVAT: Number(totalVAT).toFixed(2),
+          totalExtra: Number(totalExtra).toFixed(2),
+          totalFC: Number(totalFC).toFixed(2),
+          totalPF: Number(totalPF).toFixed(2),
+          totalWeight: Number(totalWeight),
+          total: Number(total).toFixed(2)
+        })
+      }
     })
-      setExportedInvoices(toBeExported);
-      setInvoicesReport(toBeExported);
+    setExportedInvoices(toBeExported);
+    setInvoicesReport(toBeExported);
   }
 
   const setInvoicesReport = (invoices) => {
@@ -476,16 +476,16 @@ export default function Invoices() {
                   </StyledTableRow>
                 )
                 )}
-                <StyledTableRow style={{ 'border-top': 'solid' }}>
-                  <ExportStyledTableCell align='right' colSpan={5}>{Number(exportedTotal.allPieces)}</ExportStyledTableCell>
-                  <ExportStyledTableCell align='right' colSpan={2}>{Number(exportedTotal.allExtra)}</ExportStyledTableCell>
-                  <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allWeight)}</ExportStyledTableCell>
-                  <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allAmount)}</ExportStyledTableCell>
-                  <ExportStyledTableCell align='right' colSpan={2}>{Number(exportedTotal.allFC)}</ExportStyledTableCell>
-                  <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allPF)}</ExportStyledTableCell>
-                  <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allVAT)}</ExportStyledTableCell>
-                  <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allTotal)}</ExportStyledTableCell>
-                </StyledTableRow>
+              <StyledTableRow style={{ 'border-top': 'solid' }}>
+                <ExportStyledTableCell align='right' colSpan={5}>{Number(exportedTotal.allPieces)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='right' colSpan={2}>{Number(exportedTotal.allExtra)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allWeight)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allAmount)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='right' colSpan={2}>{Number(exportedTotal.allFC)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allPF)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allVAT)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allTotal)}</ExportStyledTableCell>
+              </StyledTableRow>
             </TableBody>
           </Table>
         </TableContainer>

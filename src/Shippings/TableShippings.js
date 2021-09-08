@@ -29,6 +29,8 @@ import {
 } from '@material-ui/pickers';
 import { Button } from '@material-ui/core';
 import { PDFExport } from "@progress/kendo-react-pdf";
+import TextField from '@material-ui/core/TextField';
+import ReactHTMLTableToExcel from 'react-html-table-to-excel';
 
 
 const columns = [
@@ -263,6 +265,12 @@ export default function TableShippings() {
   const [fromDate, setFromDate] = React.useState(new Date('2020-01-01T00:00:00'));
   const [toDate, setToDate] = React.useState(new Date());
   const [openDialog, setOpenDialog] = useState(false);
+  const [searchAWB, setSearchAWB] = React.useState('');
+  const [searchCustomer, setSearchCustomer] = React.useState('');
+  const [searchWeight, setSearchWeight] = React.useState(0);
+  const [searchZone, setSearchZone] = React.useState('');
+  const [filteredShippings, setFilteredShippings] = useState([])
+
 
   const handleFromDate = (date) => {
     setFromDate(date);
@@ -313,6 +321,7 @@ export default function TableShippings() {
   useEffect(() => {
     fetchShippings().then((res) => {
       setShippings(res);
+      setFilteredShippings(res);
       setFetchingData(false)
     });
 
@@ -388,6 +397,8 @@ export default function TableShippings() {
         return 'Delivered'
       case 6:
         return 'Need Correct Address'
+      case 7:
+        return 'Held at Customs'
       default:
         return ''
     }
@@ -397,8 +408,15 @@ export default function TableShippings() {
   function ExportedTable() {
     return (
       <Grid container spacing={1} className={classes.exportRoot}>
+        <ReactHTMLTableToExcel
+          id="test-table-xls-button"
+          className="download-table-xls-button"
+          table="table-to-xls"
+          filename="tablexls"
+          sheet="tablexls"
+          buttonText="Download as XLS" />
         <TableContainer component={Paper} style={{ 'padding': '15px' }}>
-          <Table className={classes.exportTable} aria-label="spanning table">
+          <Table className={classes.exportTable} aria-label="spanning table" id="table-to-xls">
             <TableHead>
               <StyledTableRow hover role="checkbox" tabIndex={-1}>
                 {columns.map((column) => (
@@ -437,8 +455,77 @@ export default function TableShippings() {
     setOpenDialog(false);
   };
 
+  const filterShippingsBySearch = (awb, customer, zone, weight) => {
+    const result = shippings.filter(shipping =>
+      (shipping.AWB.includes(awb) || shipping.skyAWB.includes(awb)) &&
+      (shipping.customerCode.includes(customer) || shipping.customerName.includes(customer)) &&
+      (shipping.zone.includes(zone)) &&
+      (weight === 0 || shipping.weight === Number(weight)));
+
+    setFilteredShippings(result)
+  }
+
   return (
     <Paper className={classes.root}>
+      <Grid container spacing={3} style={{ 'padding-left': '15px' }}>
+        <div style={{ 'padding-left': '15px' }}>
+          <TextField
+            id="standard-name"
+            label="Search AWB/Sky AWB"
+            value={searchAWB}
+            onChange={(event) => {
+              setSearchAWB(event.target.value)
+              filterShippingsBySearch(event.target.value, searchCustomer, searchZone, searchWeight)
+            }}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </div>
+        <div style={{ 'padding-left': '15px' }}>
+          <TextField
+            id="standard-name"
+            label="Search Customer"
+            value={searchCustomer}
+            onChange={(event) => {
+              setSearchCustomer(event.target.value)
+              filterShippingsBySearch(searchAWB, event.target.value, searchZone, searchWeight)
+            }}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </div>
+        <div style={{ 'padding-left': '15px' }}>
+          <TextField
+            id="standard-name"
+            label="Search Zone"
+            value={searchZone}
+            onChange={(event) => {
+              setSearchZone(event.target.value)
+              filterShippingsBySearch(searchAWB, searchCustomer, event.target.value, searchWeight)
+            }}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </div>
+        <div style={{ 'padding-left': '15px' }}>
+          <TextField
+            id="standard-name"
+            label="Search Weight"
+            value={searchWeight}
+            type="number"
+            onChange={(event) => {
+              setSearchWeight(event.target.value)
+              filterShippingsBySearch(searchAWB, searchCustomer, searchZone, event.target.value)
+            }}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </div>
+      </Grid>
       <Grid container spacing={3} style={{ 'padding-left': '15px' }}>
         <Grid container item xs={12} sm={9}>
           <MuiPickersUtilsProvider utils={DateFnsUtils}>
@@ -520,7 +607,7 @@ export default function TableShippings() {
             rowCount={shippings.length}
           />
           <TableBody>
-            {stableSort(shippings, getComparator(order, orderBy))
+            {stableSort(filteredShippings, getComparator(order, orderBy))
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((row, index) => {
                 return (
@@ -561,7 +648,7 @@ export default function TableShippings() {
       <TablePagination
         rowsPerPageOptions={[10, 25, 100]}
         component="div"
-        count={shippings.length}
+        count={filteredShippings.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onChangePage={handleChangePage}

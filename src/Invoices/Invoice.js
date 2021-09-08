@@ -22,11 +22,11 @@ const useStyles = makeStyles((theme) => ({
     paddingLeft: '20px',
     paddingRight: '20px',
     fontSize: '12px',
-    marginTop: '3.5cm',
-    marginBottom: '2.5cm'
+    marginTop: '1.5cm',
+    marginBottom: '1.5cm'
   },
   table: {
-    fontSize: '200pt'
+    //fontSize: '200pt'
   },
   textArea: {
     margin: '5px'
@@ -62,11 +62,11 @@ export default function Invoice(props) {
       color: theme.palette.common.white,
       padding: 0,
       fontWeight: '600',
-      fontSize: '12px'
+      fontSize: '8px'
     },
     body: {
       padding: 0,
-      fontSize: '12px'
+      fontSize: '8px'
     },
   }))(TableCell);
 
@@ -83,7 +83,7 @@ export default function Invoice(props) {
       <CssBaseline />
       <div className="example-config">
         <Button
-        style={{'margin-top': '30px', 'margin-left': '85%'}}
+          style={{ 'margin-top': '30px', 'margin-left': '85%' }}
           variant="contained"
           color="primary"
           onClick={() => {
@@ -96,47 +96,48 @@ export default function Invoice(props) {
         </Button>
       </div>
       <div >
-        <PDFExport paperSize="A4" marginTop="3.5cm" marginBottom="2.5cm" ref={pdfExportComponent}>
+        <PDFExport paperSize="A4" margin={{ bottom: '4.5cm', top: '3.5cm' }} repeatHeaders={true} ref={pdfExportComponent}>
           <Grid container spacing={1} className={classes.root}>
-
-            <Grid item xs={12} sm={4} >
-              <Grid item xs={12} sm={12} >
-                <h4>Account Code  {invoice.customer.code}</h4>
-              </Grid>
-              <Grid item xs={12} sm={12} >
-                <div style={{ 'border': 'solid', 'width': '200px', 'border-width': 'thin' }}>
-                  <h5 className={classes.textArea} >{invoice.customer.name}</h5>
-                  <h5 className={classes.textArea} >{invoice.customer.addr1}</h5>
-                  <h5 className={classes.textArea} >{invoice.customer.addr2}</h5>
-                  <h5 className={classes.textArea} >{invoice.customer.number}</h5>
-
-                </div>
-              </Grid>
-            </Grid>
-            <Grid item xs={12} sm={4} >
-              <Grid item xs={12} sm={12} style={{ 'padding-left': '10%', 'width': '200px', 'height': '50px' }}>
-                <img style={{ 'width': '150px', 'height': '30px' }} src={logo} alt="Logo" />
-              </Grid>
-              <Grid item xs={12} sm={12} style={{ 'padding-left': '15%' }}>
-                <h2 style={{ 'border': 'solid', 'background-color': 'grey', 'width': '100px', 'textAlign': 'center' }} >INVOICE</h2>
-              </Grid>
-            </Grid>
-            <Grid item xs={12} sm={4} style={{ 'padding-left': '10%' }}>
-              <Grid item xs={12} sm={12}>
-                <h4>Invoice Number  {invoice.invoiceNumber}</h4>
-              </Grid>
-              <Grid item xs={12} sm={12}>
-                <h4>Date  {getDate(invoice.date.seconds)}</h4>
-              </Grid>
-              <Grid item xs={12} sm={12}>
-                <h4 style={{ 'border': 'solid', 'border-bottom': 'none', 'width': '200px', 'margin': '0px' }}>Reg. S.T.:276-951-638</h4>
-                <h4 style={{ 'border': 'solid', 'width': '200px', 'margin': '0px' }}>Tax File No:5-359-555-0-13</h4>
-              </Grid>
-            </Grid>
             <Grid item xs={12} sm={12}>
               <TableContainer component={Paper}>
                 <Table className={classes.table} aria-label="spanning table">
                   <TableHead>
+                    <div style={{ 'width': '450px', 'display': 'flex', 'padding-bottom': '10px' }}>
+                      <Grid item xs={12} sm={4} >
+                        <Grid item xs={12} sm={12} >
+                          <h4>Account Code  {invoice.customer.code}</h4>
+                        </Grid>
+                        <Grid item xs={12} sm={12} >
+                          <div style={{ 'border': 'solid', 'width': '150px', 'border-width': 'thin' }}>
+                            <h5 className={classes.textArea} >{invoice.customer.name}</h5>
+                            <h5 className={classes.textArea} >{invoice.customer.addr1}</h5>
+                            <h5 className={classes.textArea} >{invoice.customer.addr2}</h5>
+                            <h5 className={classes.textArea} >{invoice.customer.number}</h5>
+
+                          </div>
+                        </Grid>
+                      </Grid>
+                      <Grid item xs={12} sm={4} >
+                        <Grid item xs={12} sm={12} style={{ 'padding-left': '10%', 'width': '200px', 'height': '50px' }}>
+                          <img style={{ 'width': '150px', 'height': '30px' }} src={logo} alt="Logo" />
+                        </Grid>
+                        <Grid item xs={12} sm={12} style={{ 'padding-left': '35%' }}>
+                          <h2 style={{ 'border': 'solid', 'background-color': 'grey', 'width': '100px', 'textAlign': 'center' }} >INVOICE</h2>
+                        </Grid>
+                      </Grid>
+                      <Grid item xs={12} sm={4} style={{ 'padding-left': '10%' }}>
+                        <Grid item xs={12} sm={12}>
+                          <h4>Invoice Number  {invoice.invoiceNumber}</h4>
+                        </Grid>
+                        <Grid item xs={12} sm={12}>
+                          <h4>Date  {getDate(invoice.date.seconds)}</h4>
+                        </Grid>
+                        <Grid item xs={12} sm={12}>
+                          <h4 style={{ 'border': 'solid', 'border-bottom': 'none', 'width': '200px', 'margin': '0px' }}>Reg. S.T.:276-951-638</h4>
+                          <h4 style={{ 'border': 'solid', 'width': '200px', 'margin': '0px' }}>Tax File No:5-359-555-0-13</h4>
+                        </Grid>
+                      </Grid>
+                    </div>
                     <StyledTableRow hover role="checkbox" tabIndex={-1}>
                       <StyledTableCell align="center" >AWB</StyledTableCell>
                       <StyledTableCell align="center" >Date</StyledTableCell>
@@ -197,8 +198,8 @@ export default function Invoice(props) {
                       </TableRow>
                       : <div />}
                     <TableRow style={{ 'border-top': 'solid' }}>
-                      <StyledTableCell align="right" colSpan={7} style={{ 'font-weight': '700' }}>Grand Total</StyledTableCell>
-                      <StyledTableCell align="center" style={{ 'font-weight': '700' }}>{Number(Number(invoice.total).toFixed(2)) + Number(Number(invoice.totalVAT).toFixed(2))}</StyledTableCell>
+                      <StyledTableCell align="right" colSpan={7} style={{ 'font-weight': '700', 'padding-right': '15%' }}>Grand Total</StyledTableCell>
+                      <StyledTableCell align="center" style={{ 'font-weight': '700' }}>{Number(Number(invoice.total) + Number(invoice.totalVAT)).toFixed(2)}</StyledTableCell>
                     </TableRow>
                   </TableBody>
                 </Table>

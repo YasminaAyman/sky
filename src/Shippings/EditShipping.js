@@ -416,6 +416,7 @@ export default function EditShipping(props) {
               <MenuItem value={4}>Arrived at Final Destination</MenuItem>
               <MenuItem value={5}>Delivered</MenuItem>
               <MenuItem value={6}>Need Correct Address</MenuItem>
+              <MenuItem value={7}>Held at Customs</MenuItem>
             </Select>
           </FormControl>
         </Grid>

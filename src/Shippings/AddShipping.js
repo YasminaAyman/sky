@@ -63,7 +63,7 @@ export default function AddShipping(props) {
   const [customer, setCustomer] = React.useState({});
   const [selectedDate, setSelectedDate] = React.useState(new Date());
   const [country, setCountry] = React.useState({});
-  const [fc, setFC] = React.useState(1.23);
+  const [fc, setFC] = React.useState(0);
   const [rate, setRate] = React.useState(15.8);
   const [cost, setCost] = React.useState(0);
   const [dollarCost, setDollarCost] = React.useState(0);
@@ -77,6 +77,7 @@ export default function AddShipping(props) {
   const [direction, setdirection] = React.useState('dest');
   const [status, setStatus] = React.useState(1);
   const [valid, setValid] = React.useState(false);
+  const [defaultFC, setDefaultFC] = React.useState(0);
 
   const steps = getSteps();
 
@@ -220,6 +221,14 @@ export default function AddShipping(props) {
 
   React.useEffect(() => {
     async function fetchShipping() {
+
+      db.collection('FC').doc('0').get().then((doc) => {
+        if (doc.exists) {
+          const data = doc.data()
+          setFC(data.value)
+          setDefaultFC(data.value)
+        }
+      })
       let customersRes = await db.collection("customers").orderBy("code").get().then((querySnapshot) => {
         var customersList = [];
         querySnapshot.forEach((doc) => {
@@ -245,10 +254,32 @@ export default function AddShipping(props) {
     fetchShipping()
   }, [priceList])
 
+  const setdefaultFCDB = () => {
+    db.collection("FC").doc("0").set({
+      value: defaultFC,
+    }).then(function () {
+      alert('Default FC is updated successfully!')
+    });
+  }
 
   return (
     <React.Fragment>
       <CssBaseline />
+      <div style={{ 'padding-left': '15px', 'text-align': 'right' }}>
+        <TextField style={{ 'width': '100px' }}
+          id="standard-name"
+          label="Default FC"
+          value={defaultFC}
+          type="number"
+          onChange={(event) => {
+            setDefaultFC(event.target.value)
+          }
+          }
+        />
+        <Button style={{ 'height': '40px', 'align-self': 'center', 'margin-right': '15px' }} variant="contained" color="primary" onClick={() => { setdefaultFCDB() }}>
+          Set Default FC
+        </Button>
+      </div>
       <div className={classes.root}>
         <Stepper activeStep={activeStep} alternativeLabel>
           {steps.map((label) => (
@@ -515,6 +546,7 @@ export default function AddShipping(props) {
                         <MenuItem value={4}>Arrived at Final Destination</MenuItem>
                         <MenuItem value={5}>Delivered</MenuItem>
                         <MenuItem value={6}>Need Correct Address</MenuItem>
+                        <MenuItem value={7}>Held at Customs</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>

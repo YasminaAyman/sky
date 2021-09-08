@@ -11,6 +11,9 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import 'date-fns';
 import db from '../firebase.config';
 import { evaluate } from 'mathjs'
+import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
+import DateFnsUtils from '@date-io/date-fns';
+
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -47,7 +50,7 @@ export default function CreateInvoice() {
   const [customer, setCustomer] = React.useState({});
   const [fc, setFC] = React.useState(1.23);
   const [rate, setRate] = React.useState(15.8);
-  const [validCustomer, setValidCustomer] = React.useState(true);
+  const [date, setDate] = React.useState(Date.now())
 
   const classes = useStyles();
 
@@ -55,7 +58,6 @@ export default function CreateInvoice() {
     setCustomer({});
     setFC(1.23);
     setRate(15.8);
-    setValidCustomer(true)
   }
 
   const getAmount = (w, z) => {
@@ -72,77 +74,85 @@ export default function CreateInvoice() {
     }
   }
 
+  const handleDateChange = (date) => {
+    setDate(date);
+  };
+
   const createInvoice = () => {
-    const startOfMonth = moment().startOf('month').toDate();
-    const endOfMonth = moment().endOf('month').toDate();
-    db.collection("shippings")
-      .where("customerCode", "==", customer.code)
-      .where("createDate", ">=", startOfMonth)
-      .where("createDate", "<=", endOfMonth)
-      .get()
-      .then((querySnapshot) => {
-        var shippingList = [];
-        var totalAmount = 0, totalWeight = 0, totalVAT = 0, totalExtra = 0, totalFC = 0, totalPF = 0, total = 0;
+    if (!checkValidInvoice()) {
+      alert('There is an invoice with that customer and in that month!')
+    } else {
+      const startOfMonth = moment(date).startOf('month').toDate();
+      const endOfMonth = moment(date).endOf('month').toDate();
+      db.collection("shippings")
+        .where("customerCode", "==", customer.code)
+        .where("createDate", ">=", startOfMonth)
+        .where("createDate", "<=", endOfMonth)
+        .get()
+        .then((querySnapshot) => {
+          var shippingList = [];
+          var totalAmount = 0, totalWeight = 0, totalVAT = 0, totalExtra = 0, totalFC = 0, totalPF = 0, total = 0;
 
-        querySnapshot.forEach((doc) => {
-          const shipping = doc.data();
-          const amount = getAmount(shipping.weight, shipping.zone);
-          var pf = 0.1;
-          if (shipping.weight >= 50) {
-            pf = 0;
-          }
-          shippingList.push({
-            skyAWB: shipping.skyAWB,
-            createDate: shipping.createDate,
-            source: shipping.direction === 'dest' ? 'Egypt' : shipping.destination,
-            destination: shipping.direction === 'dest' ? shipping.destination : 'Egypt',
-            weight: Number(shipping.weight),
-            isDoc: shipping.isDoc,
-            amount: (amount * Number(rate)).toFixed(2),
-            amountDollar: amount.toFixed(2),
-            extraFeesDollar: Number(shipping.extraFees).toFixed(2),
-            extraFees: (Number(shipping.extraFees) * Number(rate)).toFixed(2),
-            fcAmountDollar: ((amount + Number(shipping.extraFees)) * (Number(fc) - 1)).toFixed(2),
-            fcAmount: ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1)).toFixed(2),
-            pfDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * pf).toFixed(2),
-            pf: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * pf).toFixed(2),
-            amountTotal: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf)).toFixed(2),
-            amountTotalDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * (1 + pf)).toFixed(2)
+          querySnapshot.forEach((doc) => {
+            const shipping = doc.data();
+            const amount = getAmount(shipping.weight, shipping.zone);
+            var pf = 0.1;
+            if (shipping.weight >= 50) {
+              pf = 0;
+            }
+            shippingList.push({
+              skyAWB: shipping.skyAWB,
+              createDate: shipping.createDate,
+              source: shipping.direction === 'dest' ? 'Egypt' : shipping.destination,
+              destination: shipping.direction === 'dest' ? shipping.destination : 'Egypt',
+              weight: Number(shipping.weight),
+              isDoc: shipping.isDoc,
+              amount: (amount * Number(rate)).toFixed(2),
+              amountDollar: amount.toFixed(2),
+              extraFeesDollar: Number(shipping.extraFees).toFixed(2),
+              extraFees: (Number(shipping.extraFees) * Number(rate)).toFixed(2),
+              fcAmountDollar: ((amount + Number(shipping.extraFees)) * (Number(fc) - 1)).toFixed(2),
+              fcAmount: ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1)).toFixed(2),
+              pfDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * pf).toFixed(2),
+              pf: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * pf).toFixed(2),
+              amountTotal: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf)).toFixed(2),
+              amountTotalDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * (1 + pf)).toFixed(2)
+            })
+            totalAmount += (amount * Number(rate))
+            total += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (customer.taxable ? 1.14 : 0))
+            totalExtra += (Number(shipping.extraFees) * Number(rate))
+            totalFC += ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1))
+            totalPF += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * pf)
+            totalVAT += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (customer.taxable ? 0.14 : 0))
+            totalWeight += Number(shipping.weight);
           })
-          totalAmount += (amount * Number(rate))
-          total += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf))
-          totalExtra += (Number(shipping.extraFees) * Number(rate))
-          totalFC += ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1))
-          totalPF += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * pf)
-          totalVAT += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (customer.taxable ? 0.14 : 0))
-          totalWeight += Number(shipping.weight);
-        })
 
-        db.collection("invoices").get().then((querySnapshot) => {
-          const newCode = querySnapshot.size + 10000;
-          db.collection("invoices").doc(customer.code + moment().format('MMYYYY').toString()).set({
-            invoiceNumber: newCode,
-            date: new Date(),
-            rate: Number(rate),
-            fc: Number(fc),
-            customer: customer,
-            shippings: shippingList,
-            pieces: shippingList.length,
-            totalAmount: Number(totalAmount).toFixed(2),
-            totalVAT: Number(totalVAT).toFixed(2),
-            totalExtra: Number(totalExtra).toFixed(2),
-            totalFC: Number(totalFC).toFixed(2),
-            totalPF: Number(totalPF).toFixed(2),
-            total: Number(total).toFixed(2),
-            totalWeight: Number(totalWeight),
+          db.collection("invoices").get().then((querySnapshot) => {
+            const newCode = querySnapshot.size + 10000;
+            db.collection("invoices").doc(customer.code + moment(date).format('MMYYYY').toString()).set({
+              invoiceNumber: newCode,
+              date: new Date(),
+              rate: Number(rate),
+              fc: Number(fc),
+              customer: customer,
+              shippings: shippingList,
+              pieces: shippingList.length,
+              totalAmount: Number(totalAmount).toFixed(2),
+              totalVAT: Number(totalVAT).toFixed(2),
+              totalExtra: Number(totalExtra).toFixed(2),
+              totalFC: Number(totalFC).toFixed(2),
+              totalPF: Number(totalPF).toFixed(2),
+              total: Number(total).toFixed(2),
+              totalWeight: Number(totalWeight),
+            });
           });
+          alert('Shipping is added successfully!')
+          reset();
+        })
+        .catch((error) => {
+          console.log("Error getting documents: ", error);
         });
-        alert('Shipping is added successfully!')
-        reset();
-      })
-      .catch((error) => {
-        console.log("Error getting documents: ", error);
-      });
+    }
 
   }
 
@@ -161,16 +171,19 @@ export default function CreateInvoice() {
   }, [])
 
 
-  React.useEffect(() => {
+  const checkValidInvoice = async () => {
+    let valid
     if (Object.keys(customer).length !== 0) {
-      db.collection("invoices").doc(customer.code + moment().format('MMYYYY').toString())
+      valid = await db.collection("invoices").doc(customer.code + moment(date).format('MMYYYY').toString())
         .get().then((doc) => {
           if (doc.exists) {
-            setValidCustomer(false);
+            return false
           }
+          return true
         });
     }
-  }, [customer])
+    return valid;
+  }
 
   return (
     <React.Fragment>
@@ -204,9 +217,20 @@ export default function CreateInvoice() {
               disabled={true}
             />
           </Grid>
+
           <Grid item xs={12} sm={12}>
-            <div>
-              {!validCustomer ? (<FormControlLabel value="valid" control={<div />} label="Customer is already having an invoice!" />) : <div />}</div>
+            <MuiPickersUtilsProvider utils={DateFnsUtils}>
+              <DatePicker
+                variant="inline"
+                openTo="year"
+                views={["year", "month"]}
+                label="Year and Month"
+                helperText="Start from year selection"
+                value={date}
+                onChange={handleDateChange}
+                maxDate={Date.now()}
+              />
+            </MuiPickersUtilsProvider>
           </Grid>
 
           <Grid container item xs={12} sm={12}>
