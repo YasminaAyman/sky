@@ -97,7 +97,7 @@ export default function EditInvoice(props) {
           totalVAT += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (rowInvoice.customer.taxable ? 0.14 : 0))
           total += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf))
           grandTotal += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (rowInvoice.customer.taxable ? 1.14 : 1))
-      })
+        })
         db.collection("invoices").doc(rowInvoice.customer.code + moment().format('MMYYYY').toString()).set({
           rate: Number(rate),
           fc: Number(fc),

@@ -535,7 +535,7 @@ export default function TableShippings() {
                 variant="inline"
                 format="dd/MM/yyyy"
                 margin="normal"
-                id="date-picker-inline"
+                id="date-picker-1"
                 label="From Date"
                 value={fromDate}
                 onChange={handleFromDate}
@@ -549,7 +549,7 @@ export default function TableShippings() {
                 variant="inline"
                 format="dd/MM/yyyy"
                 margin="normal"
-                id="date-picker-inline"
+                id="date-picker-2"
                 label="To Date"
                 value={toDate}
                 onChange={handleToDate}

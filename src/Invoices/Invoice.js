@@ -16,7 +16,7 @@ import logo from './sky.jpg';
 
 const useStyles = makeStyles((theme) => ({
   head: {
-    'font-weight': '600'
+    fontWeight: '600'
   },
   root: {
     paddingLeft: '20px',
@@ -24,9 +24,6 @@ const useStyles = makeStyles((theme) => ({
     fontSize: '12px',
     marginTop: '1.5cm',
     marginBottom: '1.5cm'
-  },
-  table: {
-    //fontSize: '200pt'
   },
   textArea: {
     margin: '5px'
@@ -163,43 +160,43 @@ export default function Invoice(props) {
                           <StyledTableCell style={{ 'width': '20%' }} align="center">{row.amount}</StyledTableCell>
                         </StyledTableRow>
                         <StyledTableRow hover role="checkbox" tabIndex={-1}>
-                          <StyledTableCell align="right" style={{ 'font-weight': '600' }} colSpan={6}>Fuel Surcharge</StyledTableCell>
+                          <StyledTableCell align="right" fontWeight='600' colSpan={6}>Fuel Surcharge</StyledTableCell>
                           <StyledTableCell align="center">{row.fcAmountDollar}</StyledTableCell>
                           <StyledTableCell align="center">{row.fcAmount}</StyledTableCell>
                         </StyledTableRow>
                         <StyledTableRow hover role="checkbox" tabIndex={-1}>
-                          <StyledTableCell align="right" style={{ 'font-weight': '600' }} colSpan={6}>Extra Fees</StyledTableCell>
+                          <StyledTableCell align="right" fontWeight='600' colSpan={6}>Extra Fees</StyledTableCell>
                           <StyledTableCell align="center">{row.extraFeesDollar}</StyledTableCell>
                           <StyledTableCell align="center">{row.extraFees}</StyledTableCell>
                         </StyledTableRow>
                         <StyledTableRow hover role="checkbox" tabIndex={-1}>
-                          <StyledTableCell align="right" style={{ 'font-weight': '600' }} colSpan={6}>Agency Fees</StyledTableCell>
+                          <StyledTableCell align="right" fontWeight='600' colSpan={6}>Agency Fees</StyledTableCell>
                           <StyledTableCell align="center">{row.pfDollar}</StyledTableCell>
                           <StyledTableCell align="center">{row.pf}</StyledTableCell>
                         </StyledTableRow>
                         <StyledTableRow hover role="checkbox" tabIndex={-1}>
-                          <StyledTableCell align="right" style={{ 'font-weight': '600' }} colSpan={6}>Total </StyledTableCell>
-                          <StyledTableCell align="center" style={{ 'font-weight': '600' }}>{row.amountTotalDollar}</StyledTableCell>
-                          <StyledTableCell align="center" style={{ 'font-weight': '600' }}>{row.amountTotal}</StyledTableCell>
+                          <StyledTableCell align="right" fontWeight='600' colSpan={6}>Total </StyledTableCell>
+                          <StyledTableCell align="center" fontWeight='600'>{row.amountTotalDollar}</StyledTableCell>
+                          <StyledTableCell align="center" fontWeight='600'>{row.amountTotal}</StyledTableCell>
                         </StyledTableRow>
                       </React.Fragment>
                     ))}
 
                     <TableRow style={{ 'border-top': 'solid' }}>
-                      <StyledTableCell style={{ 'font-weight': '600' }} align="right">Total Weight</StyledTableCell>
-                      <StyledTableCell style={{ 'font-weight': '600' }} align="center">{Number(invoice.totalWeight).toFixed(2)}</StyledTableCell>
-                      <StyledTableCell style={{ 'font-weight': '600' }} align="right" colSpan={5} >Total Amount</StyledTableCell>
-                      <StyledTableCell align="center" style={{ 'font-weight': '600' }}>{Number(invoice.total).toFixed(2)}</StyledTableCell>
+                      <StyledTableCell fontWeight='600' align="right">Total Weight</StyledTableCell>
+                      <StyledTableCell fontWeight='600' align="center">{Number(invoice.totalWeight).toFixed(2)}</StyledTableCell>
+                      <StyledTableCell fontWeight='600' align="right" colSpan={5} >Total Amount</StyledTableCell>
+                      <StyledTableCell align="center" fontWeight='600'>{Number(invoice.total).toFixed(2)}</StyledTableCell>
                     </TableRow>
                     {invoice.totalVAT !== 0 ?
                       <TableRow>
-                        <StyledTableCell style={{ 'font-weight': '600' }} align="right" colSpan={7} >VAT (14%)</StyledTableCell>
-                        <StyledTableCell style={{ 'font-weight': '600' }} align="center">{Number(invoice.totalVAT).toFixed(2)}</StyledTableCell>
+                        <StyledTableCell fontWeight='600' align="right" colSpan={7} >VAT (14%)</StyledTableCell>
+                        <StyledTableCell fontWeight='600' align="center">{Number(invoice.totalVAT).toFixed(2)}</StyledTableCell>
                       </TableRow>
                       : <div />}
                     <TableRow style={{ 'border-top': 'solid' }}>
-                      <StyledTableCell align="right" colSpan={7} style={{ 'font-weight': '700', 'padding-right': '15%' }}>Grand Total</StyledTableCell>
-                      <StyledTableCell align="center" style={{ 'font-weight': '700' }}>{Number(Number(invoice.total) + Number(invoice.totalVAT)).toFixed(2)}</StyledTableCell>
+                      <StyledTableCell align="right" colSpan={7} fontWeight='700' style={{'padding-right': '15%' }}>Grand Total</StyledTableCell>
+                      <StyledTableCell align="center" fontWeight='700'>{Number(Number(invoice.total) + Number(invoice.totalVAT)).toFixed(2)}</StyledTableCell>
                     </TableRow>
                   </TableBody>
                 </Table>

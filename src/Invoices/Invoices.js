@@ -300,7 +300,6 @@ export default function Invoices() {
   };
 
   const fetchInvoices = () => {
-    console.log('fetchhhhhh', moment(date).format('MM/YYYY'))
     const invoicesList = []
     return db.collection('invoices')
       .where('date', "==", moment(date).format('MM/YYYY'))
@@ -435,17 +434,23 @@ export default function Invoices() {
     var allPieces = 0, allExtra = 0, allWeight = 0, allAmount = 0, allFC = 0, allPF = 0, allVAT = 0, allTotal = 0;
     invoices.forEach((invoice) => {
       allPieces += invoice.pieces;
-      allExtra += Number(invoice.totalExtra).toFixed(2)
+      allExtra += Number(invoice.totalExtra);
       allWeight += Number(invoice.totalWeight);
-      allAmount += Number(invoice.totalAmount).toFixed(2);
-      allPF += Number(invoice.totalPF).toFixed(2);
-      allFC += Number(invoice.totalFC).toFixed(2);
-      allVAT += Number(invoice.totalVAT).toFixed(2);
-      allTotal += Number(invoice.grandTotal).toFixed(2);
+      allAmount += Number(invoice.totalAmount)
+      allPF += Number(invoice.totalPF);
+      allFC += Number(invoice.totalFC);
+      allVAT += Number(invoice.totalVAT);
+      allTotal += Number(invoice.grandTotal);
     })
     setExportedTotal({
-      allPieces, allExtra, allWeight, allAmount, allFC, allPF, allVAT, allTotal
-    })
+      allPieces, 
+      allExtra: allExtra.toFixed(2), 
+      allWeight: allWeight.toFixed(2), 
+      allAmount: allAmount.toFixed(2), 
+      allFC: allFC.toFixed(2), 
+      allPF: allPF.toFixed(2),
+      allVAT: allVAT.toFixed(2),
+      allTotal: allTotal.toFixed(2)    })
   }
 
   function ExportedTable() {
@@ -481,14 +486,14 @@ export default function Invoices() {
                 )
                 )}
               <StyledTableRow style={{ 'border-top': 'solid' }}>
-                <ExportStyledTableCell align='right' colSpan={5}>{Number(exportedTotal.allPieces)}</ExportStyledTableCell>
-                <ExportStyledTableCell align='right' colSpan={2}>{Number(exportedTotal.allExtra)}</ExportStyledTableCell>
-                <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allWeight)}</ExportStyledTableCell>
-                <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allAmount)}</ExportStyledTableCell>
-                <ExportStyledTableCell align='right' colSpan={2}>{Number(exportedTotal.allFC)}</ExportStyledTableCell>
-                <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allPF)}</ExportStyledTableCell>
-                <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allVAT)}</ExportStyledTableCell>
-                <ExportStyledTableCell align='right' colSpan={1}>{Number(exportedTotal.allTotal)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='right' style={{'padding-right': '2%'}} colSpan={5}>{Number(exportedTotal.allPieces)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='right' style={{'padding-right': '3%'}} colSpan={2}>{Number(exportedTotal.allExtra)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='center' colSpan={1}>{Number(exportedTotal.allWeight)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='center' colSpan={1}>{Number(exportedTotal.allAmount)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='right' style={{'padding-right': '2%'}} colSpan={2}>{Number(exportedTotal.allFC)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='center' colSpan={1}>{Number(exportedTotal.allPF)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='center' colSpan={1}>{Number(exportedTotal.allVAT)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='center' colSpan={1}>{Number(exportedTotal.allTotal)}</ExportStyledTableCell>
               </StyledTableRow>
             </TableBody>
           </Table>
@@ -625,9 +630,6 @@ export default function Invoices() {
                             <Typography variant="h6" className={classes.title}>
                               Invoice
                             </Typography>
-                            {/* <Button autoFocus color="inherit" onClick={handleCloseFull}>
-                              Download
-                            </Button> */}
                           </Toolbar>
                         </AppBar>
                         <Invoice rowInvoice={selectedRow} closeDialog={handleCloseFull} />
