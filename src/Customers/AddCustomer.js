@@ -39,6 +39,8 @@ const useStyles = makeStyles((theme) => ({
 
 export default function AddCustomer() {
   const classes = useStyles();
+  const [newCode, setNewCode] = React.useState('');
+  const [lastCode, setLastCode] = React.useState('');
   const [name, setName] = React.useState('');
   const [address, setAddress] = React.useState('');
   const [region, setRegion] = React.useState('');
@@ -49,9 +51,11 @@ export default function AddCustomer() {
   const [taxable, setTaxable] = React.useState(true);
 
 
-  const addCustomer = () => {
-    db.collection("customers").get().then((querySnapshot) => {
-      const newCode = querySnapshot.size + 10001;
+  const addCustomer = async () => {
+    const valid = await checkValidCustomer();
+    if (!valid) {
+      alert('There is a customer with that code!')
+    } else {
       db.collection("customers").add({
         code: newCode,
         name: name,
@@ -66,16 +70,44 @@ export default function AddCustomer() {
         .then((docRef) => {
           console.log("Document written with ID: ", docRef.id);
           alert('Customer is added successfully!')
+          if (newCode === lastCode) {
+            db.collection("constants").doc('code').set({
+              value: Number(lastCode) + 1
+            })
+          }
           reset();
         })
         .catch((error) => {
           console.error("Error adding document: ", error);
         });
-    });
+    }
 
   };
 
+  const checkValidCustomer = async () => {
+    let valid
+    valid = await db.collection("customers")
+      .where("code", "==", newCode)
+      .get().then((querySnapshot) => {
+        console.log('snap', querySnapshot.size)
+        if (querySnapshot.size === 0) {
+          return true
+        }
+        return false
+      });
+    return valid;
+  }
+
+  React.useEffect(() => {
+    db.collection("constants").doc('code').get().then((doc) => {
+      const data = doc.data()
+      setLastCode(data.value)
+      setNewCode(data.value)
+    })
+  }, [])
+
   const reset = () => {
+    setNewCode(lastCode)
     setName('');
     setAddress('');
     setRegion('');
@@ -91,8 +123,18 @@ export default function AddCustomer() {
       <CssBaseline />
       <Typography variant="h4" gutterBottom className={classes.title}>
         Add Customer
-      </Typography>      <div className={classes.root}>
+      </Typography>
+      <div className={classes.root}>
         <Grid container spacing={3}>
+          <Grid container item xs={12} sm={12}>
+            <TextField id="code" name="code" label="Code" value={newCode}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(event) => {
+                setNewCode(event.target.value)
+              }} />
+          </Grid>
           <Grid container item xs={12} sm={12}>
             <TextField id="name" name="name" label="Name" value={name}
               InputLabelProps={{
@@ -177,7 +219,7 @@ export default function AddCustomer() {
           </Grid>
           <Grid item xs={12} sm={12} >
             <Button color="primary" size="medium" style={{ 'left': '7  0%' }} onClick={addCustomer}
-              disabled={!name || !address || !region || !city || !number}
+              disabled={!newCode || !name || !address || !region || !city || !number}
             >
               Add
             </Button>

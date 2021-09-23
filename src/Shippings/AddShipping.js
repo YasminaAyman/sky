@@ -222,7 +222,7 @@ export default function AddShipping(props) {
   React.useEffect(() => {
     async function fetchShipping() {
 
-      db.collection('FC').doc('0').get().then((doc) => {
+      db.collection('constants').doc('FC').get().then((doc) => {
         if (doc.exists) {
           const data = doc.data()
           setFC(data.value)
@@ -255,7 +255,7 @@ export default function AddShipping(props) {
   }, [priceList])
 
   const setdefaultFCDB = () => {
-    db.collection("FC").doc("0").set({
+    db.collection("constants").doc("FC").set({
       value: defaultFC,
     }).then(function () {
       alert('Default FC is updated successfully!')

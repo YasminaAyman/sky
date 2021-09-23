@@ -443,14 +443,15 @@ export default function Invoices() {
       allTotal += Number(invoice.grandTotal);
     })
     setExportedTotal({
-      allPieces, 
-      allExtra: allExtra.toFixed(2), 
-      allWeight: allWeight.toFixed(2), 
-      allAmount: allAmount.toFixed(2), 
-      allFC: allFC.toFixed(2), 
+      allPieces,
+      allExtra: allExtra.toFixed(2),
+      allWeight: allWeight.toFixed(2),
+      allAmount: allAmount.toFixed(2),
+      allFC: allFC.toFixed(2),
       allPF: allPF.toFixed(2),
       allVAT: allVAT.toFixed(2),
-      allTotal: allTotal.toFixed(2)    })
+      allTotal: allTotal.toFixed(2)
+    })
   }
 
   function ExportedTable() {
@@ -486,11 +487,11 @@ export default function Invoices() {
                 )
                 )}
               <StyledTableRow style={{ 'border-top': 'solid' }}>
-                <ExportStyledTableCell align='right' style={{'padding-right': '2%'}} colSpan={5}>{Number(exportedTotal.allPieces)}</ExportStyledTableCell>
-                <ExportStyledTableCell align='right' style={{'padding-right': '3%'}} colSpan={2}>{Number(exportedTotal.allExtra)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='right' style={{ 'padding-right': '2%' }} colSpan={5}>{Number(exportedTotal.allPieces)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='right' style={{ 'padding-right': '3%' }} colSpan={2}>{Number(exportedTotal.allExtra)}</ExportStyledTableCell>
                 <ExportStyledTableCell align='center' colSpan={1}>{Number(exportedTotal.allWeight)}</ExportStyledTableCell>
                 <ExportStyledTableCell align='center' colSpan={1}>{Number(exportedTotal.allAmount)}</ExportStyledTableCell>
-                <ExportStyledTableCell align='right' style={{'padding-right': '2%'}} colSpan={2}>{Number(exportedTotal.allFC)}</ExportStyledTableCell>
+                <ExportStyledTableCell align='right' style={{ 'padding-right': '2%' }} colSpan={2}>{Number(exportedTotal.allFC)}</ExportStyledTableCell>
                 <ExportStyledTableCell align='center' colSpan={1}>{Number(exportedTotal.allPF)}</ExportStyledTableCell>
                 <ExportStyledTableCell align='center' colSpan={1}>{Number(exportedTotal.allVAT)}</ExportStyledTableCell>
                 <ExportStyledTableCell align='center' colSpan={1}>{Number(exportedTotal.allTotal)}</ExportStyledTableCell>

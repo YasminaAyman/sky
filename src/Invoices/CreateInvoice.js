@@ -12,7 +12,18 @@ import db from '../firebase.config';
 import { evaluate } from 'mathjs'
 import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
 import DateFnsUtils from '@date-io/date-fns';
+import Dialog from '@material-ui/core/Dialog';
+import Slide from '@material-ui/core/Slide';
+import AppBar from '@material-ui/core/AppBar';
+import Toolbar from '@material-ui/core/Toolbar';
+import CloseIcon from '@material-ui/icons/Close';
+import IconButton from '@material-ui/core/IconButton';
+import InvoiceDetails from './InvoiceDetails';
 
+
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -46,21 +57,27 @@ const useStyles = makeStyles((theme) => ({
 
 export default function CreateInvoice() {
   const [customers, setCustomers] = React.useState([]);
+  const [newNumber, setNewNumber] = React.useState('');
+  const [lastNumber, setLastNumber] = React.useState('');
   const [customer, setCustomer] = React.useState({});
   const [fc, setFC] = React.useState(1.23);
   const [rate, setRate] = React.useState(15.8);
   const [date, setDate] = React.useState(Date.now())
+  const [openFull, setOpenFull] = React.useState(false);
+  const [newInvoice, setNewInvoice] = React.useState({})
+
 
   const classes = useStyles();
 
   const reset = () => {
+    setNewNumber(lastNumber)
     setCustomer({});
     setFC(1.23);
     setRate(15.8);
   }
 
-  const getAmount = (w, z) => {
-    var arr = customer.priceList.split("\n")
+  const getAmount = (w, z, cust) => {
+    var arr = cust.priceList.split("\n")
     for (let i = 0; i < arr.length; i++) {
       var words = arr[i].split('\t');
       if (Number(w) > Number(words[0].trim()) && Number(w) <= Number(words[1].trim())) {
@@ -75,16 +92,32 @@ export default function CreateInvoice() {
 
   const handleDateChange = (date) => {
     setDate(date);
+    previewInvoice(newNumber, date, customer, fc, rate)
   };
 
-  const createInvoice = () => {
-    if (!checkValidInvoice()) {
+  const createInvoice = async () => {
+    const valid = await checkValidInvoice();
+    if (!valid) {
       alert('There is an invoice with that customer and in that month!')
     } else {
-      const startOfMonth = moment(date).startOf('month').toDate();
-      const endOfMonth = moment(date).endOf('month').toDate();
+      db.collection("invoices").doc(customer.code + moment(date).format('MMYYYY').toString())
+        .set(newInvoice);
+      alert('Shipping is added successfully!')
+      if (newNumber === lastNumber) {
+        db.collection("constants").doc('invoice').set({
+          value: Number(lastNumber) + 1
+        })
+      }
+      reset();
+    }
+  }
+
+  const previewInvoice = (invNumber, invDate, invCustomer, invFC, invRate) => {
+    if (Object.keys(invCustomer).length !== 0 && invCustomer.priceList !== "" && invNumber && invFC && invRate) {
+      const startOfMonth = moment(invDate).startOf('month').toDate();
+      const endOfMonth = moment(invDate).endOf('month').toDate();
       db.collection("shippings")
-        .where("customerCode", "==", customer.code)
+        .where("customerCode", "==", invCustomer.code)
         .where("createDate", ">=", startOfMonth)
         .where("createDate", "<=", endOfMonth)
         .get()
@@ -94,7 +127,7 @@ export default function CreateInvoice() {
 
           querySnapshot.forEach((doc) => {
             const shipping = doc.data();
-            const amount = getAmount(shipping.weight, shipping.zone);
+            const amount = getAmount(shipping.weight, shipping.zone, invCustomer);
             var pf = 0.1;
             if (shipping.weight >= 50) {
               pf = 0;
@@ -106,55 +139,49 @@ export default function CreateInvoice() {
               destination: shipping.direction === 'dest' ? shipping.destination : 'Egypt',
               weight: Number(shipping.weight),
               isDoc: shipping.isDoc,
-              amount: (amount * Number(rate)).toFixed(2),
+              amount: (amount * Number(invRate)).toFixed(2),
               amountDollar: amount.toFixed(2),
               extraFeesDollar: Number(shipping.extraFees).toFixed(2),
-              extraFees: (Number(shipping.extraFees) * Number(rate)).toFixed(2),
-              fcAmountDollar: ((amount + Number(shipping.extraFees)) * (Number(fc) - 1)).toFixed(2),
-              fcAmount: ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1)).toFixed(2),
-              pfDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * pf).toFixed(2),
-              pf: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * pf).toFixed(2),
-              amountTotal: ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf)).toFixed(2),
-              amountTotalDollar: ((amount + Number(shipping.extraFees)) * Number(fc) * (1 + pf)).toFixed(2)
+              extraFees: (Number(shipping.extraFees) * Number(invRate)).toFixed(2),
+              fcAmountDollar: ((amount + Number(shipping.extraFees)) * (Number(invFC) - 1)).toFixed(2),
+              fcAmount: ((amount + Number(shipping.extraFees)) * Number(invRate) * (Number(invFC) - 1)).toFixed(2),
+              pfDollar: ((amount + Number(shipping.extraFees)) * Number(invFC) * pf).toFixed(2),
+              pf: ((amount + Number(shipping.extraFees)) * Number(invRate) * Number(invFC) * pf).toFixed(2),
+              amountTotal: ((amount + Number(shipping.extraFees)) * Number(invRate) * Number(invFC) * (1 + pf)).toFixed(2),
+              amountTotalDollar: ((amount + Number(shipping.extraFees)) * Number(invFC) * (1 + pf)).toFixed(2)
             })
             totalWeight += Number(shipping.weight);
-            totalAmount += (amount * Number(rate))
-            totalExtra += (Number(shipping.extraFees) * Number(rate))
-            totalFC += ((amount + Number(shipping.extraFees)) * Number(rate) * (Number(fc) - 1))
-            totalPF += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * pf)
-            totalVAT += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (customer.taxable ? 0.14 : 0))
-            total += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf))
-            grandTotal += ((amount + Number(shipping.extraFees)) * Number(rate) * Number(fc) * (1 + pf) * (customer.taxable ? 1.14 : 1))
+            totalAmount += (amount * Number(invRate))
+            totalExtra += (Number(shipping.extraFees) * Number(invRate))
+            totalFC += ((amount + Number(shipping.extraFees)) * Number(invRate) * (Number(invFC) - 1))
+            totalPF += ((amount + Number(shipping.extraFees)) * Number(invRate) * Number(invFC) * pf)
+            totalVAT += ((amount + Number(shipping.extraFees)) * Number(invRate) * Number(invFC) * (1 + pf) * (invCustomer.taxable ? 0.14 : 0))
+            total += ((amount + Number(shipping.extraFees)) * Number(invRate) * Number(invFC) * (1 + pf))
+            grandTotal += ((amount + Number(shipping.extraFees)) * Number(invRate) * Number(invFC) * (1 + pf) * (invCustomer.taxable ? 1.14 : 1))
           })
 
-          db.collection("invoices").get().then((querySnapshot) => {
-            const newCode = querySnapshot.size + 10000;
-            db.collection("invoices").doc(customer.code + moment(date).format('MMYYYY').toString()).set({
-              invoiceNumber: newCode,
-              date: moment(date).format('MM/YYYY'),
-              rate: Number(rate),
-              fc: Number(fc),
-              customer: customer,
-              shippings: shippingList,
-              pieces: shippingList.length,
-              totalAmount: Number(totalAmount).toFixed(2),
-              totalVAT: Number(totalVAT).toFixed(2),
-              totalExtra: Number(totalExtra).toFixed(2),
-              totalFC: Number(totalFC).toFixed(2),
-              totalPF: Number(totalPF).toFixed(2),
-              total: Number(total).toFixed(2),
-              totalWeight: Number(totalWeight),
-              grandTotal: Number(grandTotal).toFixed(2)
-            });
-          });
-          alert('Shipping is added successfully!')
-          reset();
+          setNewInvoice({
+            invoiceNumber: invNumber,
+            date: moment(invDate).format('MM/YYYY'),
+            rate: Number(invRate),
+            fc: Number(invFC),
+            customer: invCustomer,
+            shippings: shippingList,
+            pieces: shippingList.length,
+            totalAmount: Number(totalAmount).toFixed(2),
+            totalVAT: Number(totalVAT).toFixed(2),
+            totalExtra: Number(totalExtra).toFixed(2),
+            totalFC: Number(totalFC).toFixed(2),
+            totalPF: Number(totalPF).toFixed(2),
+            total: Number(total).toFixed(2),
+            totalWeight: Number(totalWeight),
+            grandTotal: Number(grandTotal).toFixed(2)
+          })
         })
         .catch((error) => {
           console.log("Error getting documents: ", error);
         });
     }
-
   }
 
   React.useEffect(() => {
@@ -169,6 +196,11 @@ export default function CreateInvoice() {
       setCustomers(customersRes)
     }
     fetchCustomers()
+    db.collection("constants").doc('invoice').get().then((doc) => {
+      const data = doc.data()
+      setLastNumber(data.value)
+      setNewNumber(data.value)
+    })
   }, [])
 
 
@@ -183,8 +215,25 @@ export default function CreateInvoice() {
           return true
         });
     }
+
+    valid = await db.collection("invoices")
+      .where("invoiceNumber", "==", Number(newNumber))
+      .get().then((querySnapshot) => {
+        if (querySnapshot.size === 0) {
+          return true
+        }
+        return false
+      });
     return valid;
   }
+
+  const handleClickOpenFullDial = () => {
+    setOpenFull(true);
+  }
+
+  const handleCloseFull = () => {
+    setOpenFull(false);
+  };
 
   return (
     <React.Fragment>
@@ -194,6 +243,16 @@ export default function CreateInvoice() {
       </Typography>
       <div className={classes.root}>
         <Grid container spacing={3}>
+          <Grid container item xs={12} sm={12}>
+            <TextField id="number" name="number" label="Invoice Number" value={newNumber}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(event) => {
+                setNewNumber(event.target.value)
+                previewInvoice(event.target.value, date, customer, fc, rate)
+              }} />
+          </Grid>
           <Grid item xs={12} sm={6}>
             <Autocomplete
               id="combo-box"
@@ -202,7 +261,10 @@ export default function CreateInvoice() {
               value={customer}
               onChange={(event, newValue) => {
                 if (!newValue) setCustomer({});
-                else setCustomer(newValue);
+                else {
+                  setCustomer(newValue)
+                  previewInvoice(newNumber, date, newValue, fc, rate)
+                };
               }}
               renderInput={(params) => <TextField {...params} label="Customer Code" variant="outlined" />}
             />
@@ -245,6 +307,7 @@ export default function CreateInvoice() {
               }}
               onChange={(event) => {
                 setFC(event.target.value)
+                previewInvoice(newNumber, date, customer, event.target.value, rate)
               }}
             />
           </Grid>
@@ -259,14 +322,36 @@ export default function CreateInvoice() {
               }}
               onChange={(event) => {
                 setRate(event.target.value)
+                previewInvoice(newNumber, date, customer, fc, event.target.value)
               }}
             />
           </Grid>
           <Grid item xs={12} sm={12} >
-            <Button variant="contained" color="primary" onClick={createInvoice}
-              disabled={Object.keys(customer).length === 0 || customer.priceList === ""}>
-              Add
+            <Button variant="contained" color="primary" onClick={() => {
+              handleClickOpenFullDial()
+            }}
+            disabled={Object.keys(customer).length === 0 || customer.priceList === "" || !newNumber || !fc || !rate}>
+            Preview
             </Button>
+            <Dialog maxWidth="lg" open={openFull} onClose={handleCloseFull} TransitionComponent={Transition}>
+              <AppBar className={classes.appBar}>
+                <Toolbar>
+                  <IconButton edge="start" color="inherit" onClick={handleCloseFull} aria-label="close">
+                    <CloseIcon />
+                  </IconButton>
+                  <Typography variant="h6" className={classes.title}>
+                    Invoice
+                  </Typography>
+                </Toolbar>
+              </AppBar>
+              <div style={{ 'margin-top': '40px' }}>
+                <InvoiceDetails rowInvoice={newInvoice} closeDialog={handleCloseFull} />
+              </div>
+              <Button variant="contained" color="primary" onClick={createInvoice} style={{ 'width': '120px', 'left': '80%', 'margin-bottom': '40px' }}
+                disabled={Object.keys(customer).length === 0 || customer.priceList === "" || !newNumber}>
+                Create
+              </Button>
+            </Dialog>
           </Grid>
         </Grid>
       </div>
