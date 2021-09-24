@@ -57,7 +57,7 @@ export default function AddCustomer() {
       alert('There is a customer with that code!')
     } else {
       db.collection("customers").add({
-        code: newCode,
+        code: newCode.toString(),
         name: name,
         addr1: address,
         addr2: region,
@@ -89,7 +89,6 @@ export default function AddCustomer() {
     valid = await db.collection("customers")
       .where("code", "==", newCode)
       .get().then((querySnapshot) => {
-        console.log('snap', querySnapshot.size)
         if (querySnapshot.size === 0) {
           return true
         }
