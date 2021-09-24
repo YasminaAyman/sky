@@ -109,7 +109,7 @@ export default function InvoiceDetails(props) {
                       <h4>Invoice Number  {invoice.invoiceNumber}</h4>
                     </Grid>
                     <Grid item xs={12} sm={12}>
-                      <h4>Date  {getDate(invoice.date.seconds)}</h4>
+                      <h4>Date  {invoice.date}</h4>
                     </Grid>
                     <Grid item xs={12} sm={12}>
                       <h4 style={{ 'border': 'solid', 'border-bottom': 'none', 'width': '200px', 'margin': '0px' }}>Reg. S.T.:276-951-638</h4>

@@ -32,6 +32,7 @@ import { Button } from '@material-ui/core';
 import { PDFExport } from "@progress/kendo-react-pdf";
 import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
 import DateFnsUtils from '@date-io/date-fns';
+import ReactHTMLTableToExcel from 'react-html-table-to-excel';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -457,8 +458,15 @@ export default function Invoices() {
   function ExportedTable() {
     return (
       <Grid container spacing={1} className={classes.exportRoot}>
+        <ReactHTMLTableToExcel
+          id="test-table-xls-button"
+          className="download-table-xls-button"
+          table="table-to-xls"
+          filename="tablexls"
+          sheet="tablexls"
+          buttonText="Download as XLS" />
         <TableContainer component={Paper} style={{ 'padding': '15px' }}>
-          <Table className={classes.exportTable} aria-label="spanning table">
+          <Table className={classes.exportTable} aria-label="spanning table" id="table-to-xls">
             <TableHead>
               <StyledTableRow hover role="checkbox" tabIndex={-1}>
                 {columns.map((column) => (
